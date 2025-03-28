@@ -1,0 +1,10 @@
+{
+    "manifest_version": 3,
+    "name": "Element Finder",
+    "version": "1.0",
+    "permissions": ["activeTab", "scripting"],
+    "action": {
+      "default_popup": "popup.html"
+    }
+  }
+  
