@@ -8,6 +8,12 @@
     let conversationDescription = ""; // Store the conversation description
     let timerLineInterval = null;
     let autoSendTimeout = null;
+
+    // NEW: Add flag to prevent multiple API calls
+    let isProcessing = false;
+    let currentRequestController = null; // For aborting requests
+    let userIsTyping = false; //Track if user is typing
+
   
     // Function to stop timer and auto-send
     function stopAutoSend() {
@@ -30,6 +36,57 @@
         }
 
         console.log("🛑 Auto-send cancelled by user interaction");
+    }
+
+    // NEW: Function to check if text box is empty or contains only whitespace
+    function isTextBoxEmpty() {
+        const messageInput = document.querySelector('.msg-form__contenteditable');
+        if (!messageInput) return true;
+        
+        const text = messageInput.innerText.trim();
+        return text === '' || text === 'AI is thinking...';
+    }
+
+    // NEW: Function to check if user is currently typing
+    function checkUserTyping() {
+        const messageInput = document.querySelector('.msg-form__contenteditable');
+        if (!messageInput) return false;
+        
+        const text = messageInput.innerText.trim();
+        
+        // If there's text that's not our AI thinking message, user is typing
+        if (text !== '' && text !== 'AI is thinking...') {
+            return true;
+        }
+        
+        return false;
+    }
+
+
+      // NEW: Function to show "AI is thinking..." in text box
+      function showThinkingMessage() {
+        const messageInput = document.querySelector('.msg-form__contenteditable');
+        if (messageInput) {
+            const thinkingMessage = document.createElement('p');
+            thinkingMessage.textContent = 'AI is thinking...';
+            thinkingMessage.style.color = '#666';
+            thinkingMessage.style.fontStyle = 'italic';
+            thinkingMessage.setAttribute('data-ai-thinking', 'true'); // Mark as AI message
+            messageInput.innerHTML = thinkingMessage.outerHTML;
+            
+            const event = new Event('input', { bubbles: true });
+            messageInput.dispatchEvent(event);
+        }
+    }
+
+    // NEW: Function to clear the message input
+    function clearMessageInput() {
+        const messageInput = document.querySelector('.msg-form__contenteditable');
+        if (messageInput) {
+            messageInput.innerHTML = '';
+            const event = new Event('input', { bubbles: true });
+            messageInput.dispatchEvent(event);
+        }
     }
 
     // Create and inject timer line styles
@@ -112,6 +169,12 @@
         return;
       }
 
+      // NEW: Check if already processing
+      if (isProcessing) {
+          console.log("⏳ Already processing a request, skipping...");
+          return;
+      }
+
       try {
         const bodies = Array.from(document.querySelectorAll(".msg-s-event-listitem__body"))
           .map(el => el.innerText.trim());
@@ -139,15 +202,17 @@
           console.log("Latest message is from us, skipping");
           return;
         }
-
+        console.log("Last message no" , lastProfilesCount);
+        console.log("now profile message no" , profiles.length)
         // If we've already processed this message count, skip
         if (profiles.length <= lastProfilesCount) {
           console.log("No new messages to process");
           return;
         }
 
-        // Update our last processed count
-        lastProfilesCount = profiles.length;
+        // NEW: Set processing flag and show thinking message
+        isProcessing = true;
+        showThinkingMessage();
     
         let maxLength = Math.min(profiles.length, bodies.length);
         if (maxLength > 10) maxLength = 10;
@@ -172,22 +237,30 @@
             receiver, 
             messages,
           };
-    
+          console.log("HELLOOOOOOOOOOOOOOOOOOO");
         // Send POST request to backend.
         fetch("http://localhost:3000/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(formattedMessages)
+          body: JSON.stringify(formattedMessages),
         })
           .then(res => {
             if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
             return res.json();
           })
           .then(data => {
+            // NEW: Reset processing flag
+            isProcessing = false;
+            currentRequestController = null;
+
+             // Update our last processed count
+              lastProfilesCount = profiles.length;
+
             if (!isEnabled) {
               console.log("🔴 AI was disabled while waiting for response");
+              clearMessageInput(); // Clear the thinking message
               return;
             }
 
@@ -225,10 +298,24 @@
             }
           })
           .catch(err => {
-            console.error("❌ Error:", err);
+            // NEW: Reset processing flag on error
+            isProcessing = false;
+            currentRequestController = null;
+
+            if (err.name === 'AbortError') {
+                console.log("🛑 Request was cancelled");
+            } else {
+                console.error("❌ Error:", err);
+            }
+            
+            // Clear the thinking message on error
+            clearMessageInput();
           });
       } catch (error) {
+        // NEW: Reset processing flag on error
+        isProcessing = false;
         console.error("❌ Error in message processing:", error);
+        clearMessageInput();
       }
     }
 
@@ -245,12 +332,25 @@
     // 🛑 Stop polling
     function stopPolling() {
         isEnabled = false;
+
+        // NEW: Cancel any ongoing request
+        if (currentRequestController) {
+            currentRequestController.abort();
+            currentRequestController = null;
+        }
+
+        // NEW: Reset processing flag
+        isProcessing = false;
+        
         if (intervalId) {
             clearInterval(intervalId);
             intervalId = null;
             console.log("🔴 AI Assistant deactivated");
             chrome.storage.local.set({ aiEnabled: false });
         }
+
+        // Clear any thinking message
+        clearMessageInput();
     }
   
     // Set up message listener for both extractInfo and toggleAI actions
@@ -264,7 +364,8 @@
           extractAndSend();
           sendResponse({ 
             status: "Processing messages",
-            aiEnabled: isEnabled
+            aiEnabled: isEnabled,
+            isProcessing: isProcessing // NEW: Include processing status
           });
           return true;
         } else if (request.action === "toggleAI") {

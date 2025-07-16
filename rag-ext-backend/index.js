@@ -18,14 +18,14 @@ dotenv.config();
 const app = express();
 const port = 3000;
 
+
+app.use(express.json());
 // Add CORS middleware
 app.use(cors({
   origin: '*', // or restrict to specific domains like 'https://www.linkedin.com'
   methods: ['POST', 'GET'],
   allowedHeaders: ['Content-Type']
 }));
-
-app.use(express.json());
 
 // Set up Bull Board UI routes
 bullBoardAdapter.setBasePath('/admin/queues');
@@ -34,7 +34,7 @@ app.use('/admin/queues', bullBoardAdapter.getRouter());
 // Mount the save-context router
 app.use('/', saveContextRouter);
 // Mount the chat router
-app.use('/', chatRouter);
+app.use('/api', chatRouter);
 
 const backendPrompt = `
 You are a sophisticated LinkedIn messaging assistant representing the user (the speaker). Your task is to generate the next message that will be sent to the receiver in an ongoing professional conversation. Please follow these guidelines:
@@ -70,7 +70,7 @@ app.post('/ask', async (req, res) => {
     // console.log("📤 Received messages for:", receiver);
     // console.log(messages);
 
-    console.log("messages", messages);
+    console.log("receiver", receiver);
     console.log("messages type", typeof messages);
 
     const history = messages

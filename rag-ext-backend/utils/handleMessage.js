@@ -15,13 +15,14 @@ async function handleUserMessage(messages , receiver) {
   // Step 1: Use a cheap model for intent classification
   const intent = await classifyIntent(messages);
 
+
   let finalResponse;
 
   // Step 2: Route based on intent
   switch (intent) {
     case 'GREETING':
       // No LLM needed! Huge cost saving.
-      finalResponse = await generateResponseWithLowTierLLM(messages);
+      finalResponse = await generateResponseWithLowTierLLM(messages, receiver);
       break;
 
     case 'GENERIC':
@@ -33,7 +34,7 @@ async function handleUserMessage(messages , receiver) {
       // ONLY NOW do you use your most powerful (and expensive) model
       const ragContext = await retrieveFromQdrant(messages);
       const ragSummary = await summarize(ragContext, messages);
-      finalResponse = await generateResponseWithPowerfulLLM(messages, ragSummary);
+      finalResponse = await generateResponseWithPowerfulLLM(messages, ragSummary, receiver);
       break;
 
     default:

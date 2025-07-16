@@ -48,6 +48,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const description = descriptionTextarea.value.trim();
         try {
             await chrome.storage.local.set({ conversationDescription: description });
+
+            const response =  await fetch("http://localhost:3000/api/save-context", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                context : description 
+              })
+            })
+              .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+              })
+
+            if(response){
+              console.log('context save succes fully') ;
+            }
             
             // Notify content script about the new description
             const tabs = await chrome.tabs.query({ active: true, currentWindow: true });

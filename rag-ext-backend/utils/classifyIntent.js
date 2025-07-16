@@ -8,73 +8,52 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/${process.e
 
 
 
-// Define your categories clearly
-const INTENT_CATEGORIES = [
-//   'GREETING',          // Simple hellos, how are you?
-  'COMPLEX_QUESTION',  // A multi-part question needing detailed info.
-  'GENERIC'            // Anything that doesn't fit the above.
-].join(', ');
 
 // The prompt template
 function getClassificationPrompt(message) {
-  return `
-    You are a hyper-logical Intent Classification Engine. 
-    Your sole purpose is to analyze a user's message and classify it into exact one of categories based on a strict set of rules: 
-    [${INTENT_CATEGORIES}].
-    
-
-    Your classification decision MUST follow these detailed definitions:
-
-    ---
-    **CATEGORY DEFINITIONS**
-
-    1.  **GREETING:**
-        * **What it is:** This category is strictly for simple social interactions, pleasantries, and conversational openings or closings.
-        * **Keywords/Phrases:** "Hi", "Hello", "How are you?", "Thanks!", "Sounds good", "Have a great day."
-        * **Rule:** If the message is purely social and does not contain a request for information or action, it is a GREETING.
-
-    
-    2.  **COMPLEX_QUESTION:**
-        * **What it is:** This category is for any question or statement that is **NOT self-contained** and requires additional context to be understood or answered.
-        * **Rule:** The message is dependent on prior information. This is true if the message includes pronouns like 'it', 'that', 'those', or phrases like 'what about...', 'can you explain that further?', 'following up on...', or any query that logically builds upon a missing piece of information from a previous turn.
-
-    ---
-    **DECISION FRAMEWORK**
-
-    To decide, ask yourself these questions in order:
-    1.  Is the message a simple social pleasantry with no real query?
-        * If YES -> Classify as **GREETING**.
-    2.  If NO, then ask: To understand or answer this message, do I need to know what we were talking about before or some other details ? Is there a missing piece of context?
-        * If YES -> Classify as **COMPLEX_QUESTION**.
-    
-
-    ---
-    **EXAMPLES**
-
-    Message: "Hey, what's up?" 
-    Category: GREETING
-
-
-    Message: "Okay, and how would I implement that in my project?"
-    Category: COMPLEX_QUESTION
-
-    Message: "Thanks for the help!"
-    Category: GREETING
-
- 
-
-    Message: "Why did you give me that previous answer?"
-    Category: COMPLEX_QUESTION
-
-    ---
-    **YOUR TASK**
-
-    Analyze the message below based on all the rules above. Return ONLY the single, most appropriate category name and nothing else.
-
-    last Message: "${message}"
-    
-    Category:
-    `;
+  return `You are an ultra focused Intent Classifier.  
+  Your job is to read exactly one user message and choose **exactly one** of these categories:
+  
+    • COMPLEX_QUESTION  
+    • GENERIC  
+  
+  No other categories are allowed, and your response must be **only** the category name, nothing else.
+  
+  ---
+  
+  CATEGORY DEFINITIONS
+  
+  • COMPLEX_QUESTION  
+    - The user is asking something that **depends** on previous context or requires more details to answer.  
+    - Clues: pronouns like “it,” “that,” “those,” follow ups (“And then what?”, “Can you explain that further?”), multi part questions, or anything that builds on earlier messages.
+  
+  • GENERIC  
+    - Everything else: simple statements, standalone yes/no questions, one off facts, social pleasantries not covered by COMPLEX_QUESTION, or anything that does not require prior context.
+  
+  ---
+  
+  FEW SHOT EXAMPLES
+  
+  Message: “Hello, how is it going?”  
+  Category: GENERIC
+  
+  Message: “Can you show me the code again?”  
+  Category: COMPLEX_QUESTION
+  
+  Message: “Thanks, that helps!”  
+  Category: GENERIC
+  
+  Message: “Why did you choose that algorithm?”  
+  Category: COMPLEX_QUESTION
+  
+  ---
+  
+  Now classify **only** this message:
+  
+  > ${message}
+  
+  **Category:**`
+  ;
 }
 
 

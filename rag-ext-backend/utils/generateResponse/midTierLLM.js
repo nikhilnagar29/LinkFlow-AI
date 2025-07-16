@@ -7,7 +7,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const url = `https://generativelanguage.googleapis.com/v1beta/models/${process.env.MID_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // The prompt template for mid-tier LLM (generic conversations)
-function getMidTierPrompt(messages) {
+function getMidTierPrompt(messages, receiver) {
   // Get the most recent message from the opponent
   const lastMessage = messages[0].message;
   const opponentName = messages[0].role;
@@ -42,6 +42,10 @@ function getMidTierPrompt(messages) {
     
     Conversation History (most recent first):
     ${conversationHistory}
+
+
+    Receiver: {${receiver}}
+    you are sender.
     
     The person you're talking to is: ${opponentName}
     

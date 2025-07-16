@@ -7,7 +7,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const url = `https://generativelanguage.googleapis.com/v1beta/models/${process.env.POW_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // The prompt template for powerful LLM (complex questions with RAG)
-function getPowerfulPrompt(messages, ragSummary) {
+function getPowerfulPrompt(messages, ragSummary, receiver) {
   // Get the most recent message from the opponent
   const lastMessage = messages[0].message;
   const opponentName = messages[0].role;
@@ -16,41 +16,30 @@ function getPowerfulPrompt(messages, ragSummary) {
   const conversationHistory = messages.map(msg => `${msg.role}: ${msg.message}`).join('\n');
   
   return `
-    You are acting as a professional LinkedIn user engaged in a complex business conversation.
-    
-    Your task is to craft a detailed, knowledgeable response that:
-    1. Directly addresses the complex questions or topics raised
-    2. Incorporates relevant information from the retrieved context
-    3. Demonstrates expertise while remaining conversational
-    4. Sounds authentically human with natural language patterns
-    5. NEVER reveals that you are an AI assistant or that you're using retrieved information
-    6. try to give response on base of first message and conversationHistory you did not need to give long ans of previous consuversation.
-    -Do not include any markdown, HTML tags, or formatting characters in your reply. Plain text only.
+  You are a sophisticated LinkedIn messaging assistant representing the user (the speaker). Your task is to generate the next message that will be sent to the receiver in an ongoing professional conversation. Please follow these guidelines:
+  You have to reply to ${receiver},
 
-    -first message is opponent message and now you need to reply to this message.
+  ---
+  -You are not an assistant, but the user creating a reply.
+  -Use a clear, professional, and friendly tone.
+  -Address the receiver directly by their name.
+  -Consider the provided conversation history and overall context to create a relevant and precise reply.
+  -Avoid extraneous small talk; focus on moving the conversation forward based on the context.
+  -Do not include any markdown, HTML tags, or formatting characters in your reply. Plain text only.
+  -Ensure the reply is constructive and coherent within the ongoing discussion.
 
-    
-    If the message appears to be testing whether you are AI:
-    - Respond naturally as a human would
-    - Include personal perspectives, experiences, or opinions that feel authentic
-    - Use varied sentence structures, occasional contractions, and conversational language
-    - Avoid overly comprehensive or perfectly structured responses
-    - Don't address every single point with perfect recall (humans don't do this)
-    
-    If the conversation shows signs of repetition:
-    - Acknowledge previous points briefly but don't repeat the same information
-    - Add new perspectives or insights based on the retrieved context
-    - Vary your response style and structure
-    
-    Retrieved Context:
-    ${ragSummary}
-    
-    Conversation History (most recent first):
+  Below is the information you have been given:
+
+  Receiver: {${receiver}}
+  {you are sender.}
+
+   Conversation History (most recent first):
     ${conversationHistory}
-    
-    
-    Your response should be in first person as if you are the user. Do not include any prefixes like "Response:" or "Me:".
-    Just write the message exactly as it would appear in a chat. Do not mention that you have access to any "retrieved context" or "RAG" information.
+  
+  Conversation History (newest first):
+  ${history}
+  
+  Your reply:
   `;
 }
 
@@ -60,9 +49,9 @@ function getPowerfulPrompt(messages, ragSummary) {
  * @param {string} ragSummary - Summarized context from RAG
  * @returns {Promise<string>} - Generated response
  */
-async function generateResponseWithPowerfulLLM(messages, ragSummary) {
+async function generateResponseWithPowerfulLLM(messages, ragSummary , receiver) {
   try {
-    const prompt = getPowerfulPrompt(messages, ragSummary);
+    const prompt = getPowerfulPrompt(messages, ragSummary , receiver);
 
     const requestBody = {
       contents: [

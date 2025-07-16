@@ -7,7 +7,7 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const url = `https://generativelanguage.googleapis.com/v1beta/models/${process.env.LOW_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // The prompt template for low-tier LLM (simple greetings)
-function getLowTierPrompt(messages) {
+function getLowTierPrompt(messages, receiver) {
   // Get the most recent message from the opponent
   const lastMessage = messages[0].message;
   const opponentName = messages[0].role;
@@ -41,6 +41,9 @@ function getLowTierPrompt(messages) {
     ${conversationHistory}
     
     The person you're talking to is: ${opponentName}
+
+     Receiver: {${receiver}}
+     you are sender.
     
     Your response should be in first person as if you are the user. Do not include any prefixes like "Response:" or "Me:".
     Just write the message exactly as it would appear in a chat.
