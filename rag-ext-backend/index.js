@@ -4,6 +4,11 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cors from 'cors';
+import saveContextRouter, { bullBoardAdapter } from './routes/save-context.js';
+import chatRouter from './routes/chat.js';
+
+// Import worker code directly
+import './worker/embeddings.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,11 +21,20 @@ const port = 3000;
 // Add CORS middleware
 app.use(cors({
   origin: '*', // or restrict to specific domains like 'https://www.linkedin.com'
-  methods: ['POST'],
+  methods: ['POST', 'GET'],
   allowedHeaders: ['Content-Type']
 }));
 
 app.use(express.json());
+
+// Set up Bull Board UI routes
+bullBoardAdapter.setBasePath('/admin/queues');
+app.use('/admin/queues', bullBoardAdapter.getRouter());
+
+// Mount the save-context router
+app.use('/', saveContextRouter);
+// Mount the chat router
+app.use('/', chatRouter);
 
 const backendPrompt = `
 You are a sophisticated LinkedIn messaging assistant representing the user (the speaker). Your task is to generate the next message that will be sent to the receiver in an ongoing professional conversation. Please follow these guidelines:
@@ -56,11 +70,12 @@ app.post('/ask', async (req, res) => {
     // console.log("📤 Received messages for:", receiver);
     // console.log(messages);
 
+    console.log("messages", messages);
+    console.log("messages type", typeof messages);
+
     const history = messages
     .map((msg, i) => `${msg.role}: ${msg.message}`)
     .join("\n");
-
-    console.log("📤 History of the conversation:", history);
 
     const fullPrompt = backendPrompt
         .replace('{{receiver}}', receiver)
@@ -106,6 +121,17 @@ app.post('/ask', async (req, res) => {
   }
 });
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Server is running',
+    workerStatus: 'active'
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Bull Board UI available at http://localhost:${port}/admin/queues`);
+  console.log(`Worker is running in the same process`);
 });

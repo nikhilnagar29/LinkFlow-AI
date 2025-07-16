@@ -13,7 +13,7 @@ An AI-powered Chrome extension for LinkedIn that reads your previous chats, gene
 ## Video Demo
 
 Watch the demo video to see the extension in action: [Demo Video](#)  
-*(Replace the link above with your actual video URL.)*
+
 
 ## Setup Instructions
 

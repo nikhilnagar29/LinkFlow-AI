@@ -163,14 +163,18 @@
         console.log("💬 Processing conversation with:", receiver);
         console.log("📝 Latest message from:", latestSender);
     
+        // const formattedMessages = { 
+        //   receiver, 
+        //   messages,
+        //   description: conversationDescription // Include the description in the request
+        // };
         const formattedMessages = { 
-          receiver, 
-          messages,
-          description: conversationDescription // Include the description in the request
-        };
+            receiver, 
+            messages,
+          };
     
         // Send POST request to backend.
-        fetch("http://localhost:3000/ask", {
+        fetch("http://localhost:3000/api/chat", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
