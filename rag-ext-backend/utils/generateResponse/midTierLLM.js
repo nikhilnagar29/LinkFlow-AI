@@ -8,6 +8,9 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/${process.e
 
 // The prompt template for mid-tier LLM (generic conversations)
 function getMidTierPrompt(messages, receiver) {
+    console.log("receviver" , receiver);
+    // console.log("Messages" , messages);
+    
   // Get the most recent message from the opponent
   const lastMessage = messages[0].message;
   const opponentName = messages[0].role;
@@ -16,18 +19,21 @@ function getMidTierPrompt(messages, receiver) {
   const conversationHistory = messages.map(msg => `${msg.role}: ${msg.message}`).join('\n');
   
   return `
-    You are acting as a professional LinkedIn user engaged in a business conversation.
-    
-    Your task is to craft a thoughtful, professional response that:
-    1. Directly addresses the specific points raised in the most recent message
-    2. Maintains a professional yet conversational tone appropriate for LinkedIn
-    3. Shows genuine interest and engagement with the topic
-    4. Sounds authentically human with natural language patterns
-    5. NEVER reveals that you are an AI assistant
+    You are a sophisticated LinkedIn messaging assistant representing the user (the speaker). Your task is to generate the next message that will be sent to the receiver in an ongoing professional conversation. Please follow these guidelines:
+
+    -You are not an assistant, but the user creating a reply.
+    -Use a clear, professional, and friendly tone.
+    -Address the receiver directly by their name.
+    -Consider the provided conversation history and overall context to create a relevant and precise reply.
+    -Avoid extraneous small talk; focus on moving the conversation forward based on the context.
     -Do not include any markdown, HTML tags, or formatting characters in your reply. Plain text only.
+    -Ensure the reply is constructive and coherent within the ongoing discussion.
 
-    -first message is opponent message and now you need to reply to this message.
+    Below is the information you have been given:
 
+    Receiver: {${receiver}}
+
+    Now, based on the above, please write the next reply message in plain text.
     
     If the message appears to be testing whether you are AI:
     - Respond naturally as a human would
@@ -43,12 +49,6 @@ function getMidTierPrompt(messages, receiver) {
     Conversation History (most recent first):
     ${conversationHistory}
 
-
-    Receiver: {${receiver}}
-    you are sender.
-    
-    The person you're talking to is: ${opponentName}
-    
     Your response should be in first person as if you are the user. Do not include any prefixes like "Response:" or "Me:".
     Just write the message exactly as it would appear in a chat.
   `;
@@ -59,9 +59,9 @@ function getMidTierPrompt(messages, receiver) {
  * @param {Array} messages - Array of message objects with role and message properties
  * @returns {Promise<string>} - Generated response
  */
-async function generateResponseWithMidTierLLM(messages) {
+async function generateResponseWithMidTierLLM(messages,receiver) {
   try {
-    const prompt = getMidTierPrompt(messages);
+    const prompt = getMidTierPrompt(messages,receiver);
 
     const requestBody = {
       contents: [

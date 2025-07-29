@@ -36,8 +36,7 @@ function getPowerfulPrompt(messages, ragSummary, receiver) {
    Conversation History (most recent first):
     ${conversationHistory}
   
-  Conversation History (newest first):
-  ${history}
+  
   
   Your reply:
   `;

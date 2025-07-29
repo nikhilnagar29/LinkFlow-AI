@@ -7,7 +7,6 @@ router.post('/chat', async (req, res) => {
   try {
     const { messages, receiver } = req.body;        // <-- fixed here
 
-    console.log("Messages" , messages) ;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ success: false, error: 'Invalid messages format' });

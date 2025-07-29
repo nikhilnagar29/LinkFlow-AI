@@ -47,6 +47,9 @@ function getClassificationPrompt(message) {
   Category: COMPLEX_QUESTION
   
   ---
+
+  -> when you more than 95% sure this is a generic question than only classify it as GENERIC.
+  other wise, classify it as COMPLEX_QUESTION.
   
   Now classify **only** this message:
   

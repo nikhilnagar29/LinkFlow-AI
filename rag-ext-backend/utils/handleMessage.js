@@ -15,6 +15,8 @@ async function handleUserMessage(messages , receiver) {
   // Step 1: Use a cheap model for intent classification
   const intent = await classifyIntent(messages);
 
+  console.log("receiver", receiver)
+
 
   let finalResponse;
 
@@ -27,7 +29,7 @@ async function handleUserMessage(messages , receiver) {
 
     case 'GENERIC':
       // Use a mid-tier model for summarization/data retrieval
-      finalResponse = await generateResponseWithMidTierLLM(messages);
+      finalResponse = await generateResponseWithMidTierLLM(messages, receiver);
       break;
 
     case 'COMPLEX_QUESTION':
